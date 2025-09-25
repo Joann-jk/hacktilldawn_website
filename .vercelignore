@@ -1,2 +1,5 @@
-# Ignore API files from Vite processing
-api/
+# Ignore specific API files from Vite processing (but keep serverless functions)
+api/projects-data.js
+api/rate-limiter.js
+api/webhook-validator.js
+api/message-fetcher.js
