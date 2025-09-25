@@ -19,7 +19,7 @@ export default function AllProjects() {
       // Use different API URL for development vs production
       const apiUrl = import.meta.env.DEV 
         ? 'http://localhost:3001/api/projects' 
-        : '/api/projects';
+        : '/projects.json';
       
       const response = await fetch(apiUrl);
       if (!response.ok) {

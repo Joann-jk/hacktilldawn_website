@@ -1,16 +1,15 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// For Vercel serverless environment, use process.cwd() instead of __dirname
+const DATA_FILE = path.join(process.cwd(), 'data', 'projects.json');
 
-const DATA_FILE = path.join(__dirname, '..', 'data', 'projects.json');
-
-// Ensure data directory exists
-const dataDir = path.dirname(DATA_FILE);
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+// Ensure data directory exists (only in development)
+if (process.env.NODE_ENV !== 'production') {
+    const dataDir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
 }
 
 // Load projects from JSON file
@@ -19,6 +18,8 @@ function loadProjects() {
         if (fs.existsSync(DATA_FILE)) {
             const data = fs.readFileSync(DATA_FILE, 'utf8');
             return JSON.parse(data);
+        } else {
+            console.log('Projects data file not found, using empty array');
         }
     } catch (error) {
         console.error('Error loading projects from file:', error);
@@ -29,8 +30,13 @@ function loadProjects() {
 // Save projects to JSON file
 function saveProjects(projects) {
     try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(projects, null, 2));
-        console.log(`Projects saved to ${DATA_FILE}`);
+        // Only save in development or if data directory exists
+        if (process.env.NODE_ENV !== 'production' || fs.existsSync(path.dirname(DATA_FILE))) {
+            fs.writeFileSync(DATA_FILE, JSON.stringify(projects, null, 2));
+            console.log(`Projects saved to ${DATA_FILE}`);
+        } else {
+            console.log('Skipping file save in production (data directory not available)');
+        }
     } catch (error) {
         console.error('Error saving projects to file:', error);
     }
@@ -43,7 +49,7 @@ let replies = [];
 
 // Load reactions and replies from JSON files
 function loadReactions() {
-    const reactionsFile = path.join(__dirname, '..', 'data', 'reactions.json');
+    const reactionsFile = path.join(process.cwd(), 'data', 'reactions.json');
     try {
         if (fs.existsSync(reactionsFile)) {
             const data = fs.readFileSync(reactionsFile, 'utf8');
@@ -56,7 +62,7 @@ function loadReactions() {
 }
 
 function loadReplies() {
-    const repliesFile = path.join(__dirname, '..', 'data', 'replies.json');
+    const repliesFile = path.join(process.cwd(), 'data', 'replies.json');
     try {
         if (fs.existsSync(repliesFile)) {
             const data = fs.readFileSync(repliesFile, 'utf8');
@@ -70,18 +76,22 @@ function loadReplies() {
 
 // Save reactions and replies to JSON files
 function saveReactions() {
-    const reactionsFile = path.join(__dirname, '..', 'data', 'reactions.json');
+    const reactionsFile = path.join(process.cwd(), 'data', 'reactions.json');
     try {
-        fs.writeFileSync(reactionsFile, JSON.stringify(reactions, null, 2));
+        if (process.env.NODE_ENV !== 'production' || fs.existsSync(path.dirname(reactionsFile))) {
+            fs.writeFileSync(reactionsFile, JSON.stringify(reactions, null, 2));
+        }
     } catch (error) {
         console.error('Error saving reactions to file:', error);
     }
 }
 
 function saveReplies() {
-    const repliesFile = path.join(__dirname, '..', 'data', 'replies.json');
+    const repliesFile = path.join(process.cwd(), 'data', 'replies.json');
     try {
-        fs.writeFileSync(repliesFile, JSON.stringify(replies, null, 2));
+        if (process.env.NODE_ENV !== 'production' || fs.existsSync(path.dirname(repliesFile))) {
+            fs.writeFileSync(repliesFile, JSON.stringify(replies, null, 2));
+        }
     } catch (error) {
         console.error('Error saving replies to file:', error);
     }
