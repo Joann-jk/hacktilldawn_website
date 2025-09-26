@@ -1,0 +1,17 @@
+{
+  "name": "hacktilldawn-api-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker API for HackTillDawn",
+  "main": "cloudflare-worker.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "keywords": ["cloudflare", "worker", "api", "hackathon"],
+  "author": "HackTillDawn Team",
+  "license": "MIT"
+}

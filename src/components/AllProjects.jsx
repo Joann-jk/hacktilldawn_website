@@ -24,12 +24,28 @@ export default function AllProjects() {
       // Use different API URL for development vs production
       const apiUrl = import.meta.env.DEV 
         ? 'http://localhost:3001/api/projects' 
-        : '/api/projects';
+        : 'https://hacktilldawn-api.dev-jeromtom.workers.dev/api/projects';
       
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects');
+      let response;
+      try {
+        response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error('API not available');
+        }
+      } catch (error) {
+        console.warn('API not available, using static data:', error.message);
+        // Fallback to static data
+        const staticResponse = await fetch('/projects.json');
+        if (!staticResponse.ok) {
+          throw new Error('Failed to fetch static data');
+        }
+        const data = await staticResponse.json();
+        const sortedProjects = (data.projects || [])
+          .sort((a, b) => (b.totalReactions || 0) - (a.totalReactions || 0));
+        setProjects(sortedProjects);
+        return;
       }
+      
       const data = await response.json();
       
       // Sort projects by total reactions in descending order

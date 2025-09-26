@@ -1,0 +1,18 @@
+name = "hacktilldawn-api"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-09-26"
+
+[env.production]
+name = "hacktilldawn-api"
+
+[env.production.vars]
+# Environment variables will be set in Cloudflare dashboard
+SUPABASE_URL = ""
+SUPABASE_ANON_KEY = ""
+WHAPI_TOKEN = ""
+WHAPI_WEBHOOK_SECRET = ""
+
+# Routes configuration
+[[env.production.routes]]
+pattern = "api.hacktilldawn.workers.dev/*"
+zone_name = "workers.dev"

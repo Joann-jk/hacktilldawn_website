@@ -1,4 +1,5 @@
-export default function handler(req, res) {
+// Vercel API function - using CommonJS format as recommended
+module.exports = (req, res) => {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -21,7 +22,7 @@ export default function handler(req, res) {
         const supabaseKey = process.env.SUPABASE_ANON_KEY;
         
         if (supabaseUrl && supabaseKey) {
-            // Try Supabase
+            // Try Supabase first
             try {
                 const { createClient } = require('@supabase/supabase-js');
                 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -77,14 +78,14 @@ export default function handler(req, res) {
         console.error('Error retrieving projects:', error);
         fallbackResponse(res);
     }
-}
+};
 
 function fallbackResponse(res) {
     // Return test data as fallback
     const testProjects = [
         {
             name: "HackTillDawn Project Gallery",
-            description: "View and vote on all projects built at HackTillDawn.",
+            description: "View and vote on all projects built at HackTillDawn. This is a test project to verify the API is working correctly.",
             url: "https://hacktilldawn-website.vercel.app/projects",
             teamName: "HackTillDawn",
             teamMembers: "Joann, Jerom",
@@ -97,19 +98,35 @@ function fallbackResponse(res) {
             reactionCounts: {},
             totalReactions: 0,
             totalReplies: 0
+        },
+        {
+            name: "Sample Project",
+            description: "This is a sample project to demonstrate the system is working. Participants can submit their projects via WhatsApp!",
+            url: "https://example.com",
+            teamName: "Sample Team",
+            teamMembers: "John Doe, Jane Smith",
+            sender: "Sample User",
+            groupName: "HackTillDawn Final Participants",
+            messageId: "sample_001",
+            timestamp: new Date().toISOString(),
+            reactions: [],
+            replies: [],
+            reactionCounts: {},
+            totalReactions: 0,
+            totalReplies: 0
         }
     ];
     
     res.json({
         projects: testProjects,
-        totalCount: 1,
+        totalCount: testProjects.length,
         lastUpdated: new Date().toISOString(),
         metadata: {
             dataSource: 'fallback',
             lastFetched: new Date().toISOString(),
-            updateFrequency: 'fallback mode'
+            updateFrequency: 'fallback mode - ready for real data'
         },
         isSampleData: true,
         dataSource: 'fallback'
     });
-}// Force rebuild
+}

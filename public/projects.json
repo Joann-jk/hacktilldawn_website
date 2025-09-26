@@ -1,45 +1,31 @@
 {
   "projects": [
     {
-      "name": "Test Project",
-      "description": "This is a test project to verify persistence",
-      "url": "https://example.com",
-      "teamName": "Test Team",
-      "teamMembers": "Test User, Test Member",
-      "sender": "Test User",
-      "groupName": "Test Group",
-      "timestamp": "2025-09-25T17:51:20.348Z",
-      "reactions": [],
-      "replies": [],
-      "reactionCounts": {},
-      "totalReactions": 0,
-      "totalReplies": 0
-    },
-    {
-      "name": "Hacked",
-      "description": "Hackathon project description",
-      "url": "https://hacked.com",
-      "teamName": "Hackerz",
-      "teamMembers": "Jerom Tom, John Doe",
-      "sender": "Jerom Tom",
-      "groupName": "HackTillDawn Final Participants",
-      "timestamp": "2025-01-27T10:00:00.000Z",
-      "reactions": [],
-      "replies": [],
-      "reactionCounts": {},
-      "totalReactions": 0,
-      "totalReplies": 0
-    },
-    {
-      "name": "Project Gallery",
-      "description": "View and vote on all projects built at HackTillDawn.",
+      "name": "HackTillDawn Project Gallery",
+      "description": "View and vote on all projects built at HackTillDawn. This is a test project to verify the system is working correctly.",
       "url": "https://hacktilldawn-website.vercel.app/projects",
       "teamName": "HackTillDawn",
       "teamMembers": "Joann, Jerom",
       "sender": "Jerom Palimattom Tom",
       "groupName": "HackTillDawn Final Participants",
       "messageId": "pe.VGVcxmWLREHCNvj7a4Q-wpgBq53lJfJECQ",
-      "timestamp": "2025-09-25T21:21:04.000Z",
+      "timestamp": "2025-09-25T23:00:37.000Z",
+      "reactions": [],
+      "replies": [],
+      "reactionCounts": {},
+      "totalReactions": 0,
+      "totalReplies": 0
+    },
+    {
+      "name": "Sample Project",
+      "description": "This is a sample project to demonstrate the system is working. Participants can submit their projects via WhatsApp!",
+      "url": "https://example.com",
+      "teamName": "Sample Team",
+      "teamMembers": "John Doe, Jane Smith",
+      "sender": "Sample User",
+      "groupName": "HackTillDawn Final Participants",
+      "messageId": "sample_001",
+      "timestamp": "2025-09-26T02:00:00.000Z",
       "reactions": [],
       "replies": [],
       "reactionCounts": {},
@@ -47,9 +33,13 @@
       "totalReplies": 0
     }
   ],
-  "totalCount": 3,
-  "lastUpdated": "2025-09-25T21:21:04.000Z",
-  "metadata": {},
-  "isSampleData": false,
-  "dataSource": "real"
+  "totalCount": 2,
+  "lastUpdated": "2025-09-26T02:00:00.000Z",
+  "metadata": {
+    "dataSource": "static",
+    "lastFetched": "2025-09-26T02:00:00.000Z",
+    "updateFrequency": "static data - ready for real submissions"
+  },
+  "isSampleData": true,
+  "dataSource": "static"
 }

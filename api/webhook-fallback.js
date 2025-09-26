@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 // Fallback to file-based storage if database is not available
 const DATA_FILE = path.join(process.cwd(), 'data', 'projects.json');
@@ -82,7 +82,7 @@ function saveReplies(replies) {
 }
 
 // Add project with fallback
-export async function addProjectWithFallback(project) {
+async function addProjectWithFallback(project) {
     try {
         // Try Supabase first
         const { addProject } = await import('../database/supabase-projects.js');
@@ -147,7 +147,7 @@ export async function addProjectWithFallback(project) {
 }
 
 // Add reaction with fallback
-export async function addReactionWithFallback(reactionData) {
+async function addReactionWithFallback(reactionData) {
     try {
         // Try Supabase first
         const { addReaction } = await import('../database/supabase-projects.js');
@@ -186,7 +186,7 @@ export async function addReactionWithFallback(reactionData) {
 }
 
 // Add reply with fallback
-export async function addReplyWithFallback(replyData) {
+async function addReplyWithFallback(replyData) {
     try {
         // Try Supabase first
         const { addReply } = await import('../database/supabase-projects.js');
@@ -223,3 +223,10 @@ export async function addReplyWithFallback(replyData) {
         return replyData;
     }
 }
+
+// Export functions for CommonJS
+module.exports = {
+    addProjectWithFallback,
+    addReactionWithFallback,
+    addReplyWithFallback
+};
