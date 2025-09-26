@@ -215,12 +215,13 @@ async function handleWebhook(request, corsHeaders) {
   try {
     const body = await request.json()
     
-    // Webhook validation
+    // Webhook validation (more lenient for testing)
     const signature = request.headers.get('X-Whapi-Signature')
     const webhookSecret = WHAPI_WEBHOOK_SECRET
     
-    if (!signature && webhookSecret && webhookSecret !== 'default-secret') {
-      console.warn('Missing webhook signature')
+    // Only validate signature in production with real webhook secret
+    if (webhookSecret && webhookSecret !== 'default-secret' && !signature) {
+      console.warn('Missing webhook signature in production')
       return new Response('Unauthorized', { status: 401, headers: corsHeaders })
     }
     
@@ -250,6 +251,7 @@ async function handleWebhook(request, corsHeaders) {
         body.chat_name === TARGET_GROUP) {
       
       const message = body.text?.body || ''
+      console.log('📝 Processing message:', message.substring(0, 100) + '...')
       
       // Check if it's a reply to a project
       if (body.context && body.context.quoted_message) {
@@ -268,6 +270,7 @@ async function handleWebhook(request, corsHeaders) {
         
       } else {
         // Check if it's a project submission
+        console.log('🔍 Attempting to parse project message...')
         const project = parseProjectMessage(message)
         
         if (project) {
@@ -277,6 +280,7 @@ async function handleWebhook(request, corsHeaders) {
           project.message_id = body.message_id
           project.timestamp = new Date().toISOString()
           
+          console.log('✅ Project parsed successfully:', project)
           await addProjectToSupabase(project, supabaseUrl, supabaseKey)
           console.log('✅ REAL-TIME: New project added:', project.name)
         } else {
@@ -351,23 +355,25 @@ function parseProjectMessage(message) {
   // More flexible field detection
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toLowerCase()
+    const originalLine = lines[i]
     
     // Check for field headers (case insensitive, more flexible)
-    if (line.includes('project name:') || line.includes('name:') || line.includes('project:')) {
-      currentField = 'name'
-      name = lines[i].substring(lines[i].indexOf(':') + 1).trim()
-    } else if (line.includes('description:') || line.includes('desc:')) {
-      currentField = 'description'
-      description = lines[i].substring(lines[i].indexOf(':') + 1).trim()
-    } else if (line.includes('url:') || line.includes('link:') || line.includes('github:') || line.includes('demo:')) {
-      currentField = 'url'
-      url = lines[i].substring(lines[i].indexOf(':') + 1).trim()
+    // Order matters - check more specific patterns first
+    if (line.includes('team members:') || line.includes('members:') || line.includes('team members') || line.includes('developers:')) {
+      currentField = 'team_members'
+      team_members = originalLine.substring(originalLine.indexOf(':') + 1).trim()
     } else if (line.includes('team name:') || line.includes('team:') || line.includes('group:')) {
       currentField = 'team_name'
-      team_name = lines[i].substring(lines[i].indexOf(':') + 1).trim()
-    } else if (line.includes('team members:') || line.includes('members:') || line.includes('team members') || line.includes('developers:')) {
-      currentField = 'team_members'
-      team_members = lines[i].substring(lines[i].indexOf(':') + 1).trim()
+      team_name = originalLine.substring(originalLine.indexOf(':') + 1).trim()
+    } else if (line.includes('project name:') || line.includes('name:') || line.includes('project:')) {
+      currentField = 'name'
+      name = originalLine.substring(originalLine.indexOf(':') + 1).trim()
+    } else if (line.includes('description:') || line.includes('desc:')) {
+      currentField = 'description'
+      description = originalLine.substring(originalLine.indexOf(':') + 1).trim()
+    } else if (line.includes('url:') || line.includes('link:') || line.includes('github:') || line.includes('demo:')) {
+      currentField = 'url'
+      url = originalLine.substring(originalLine.indexOf(':') + 1).trim()
     } else {
       // Continue reading content for the current field
       if (currentField === 'name' && !name) {
