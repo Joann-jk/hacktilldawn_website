@@ -1,45 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import useRealtimeProjects from "../hooks/useRealtimeProjects";
 
 export default function TopProjects() {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      // Use different API URL for development vs production
-      const apiUrl = import.meta.env.DEV 
-        ? 'http://localhost:3001/api/projects' 
-        : 'https://hacktilldawn-api.dev-jeromtom.workers.dev/api/projects';
-      
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects');
-      }
-      const data = await response.json();
-      
-      // Sort projects by total reactions in descending order and take top 3
-      const sortedProjects = (data.projects || [])
-        .sort((a, b) => (b.totalReactions || 0) - (a.totalReactions || 0))
-        .slice(0, 3);
-      
-      setProjects(sortedProjects);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching projects:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { projects: allProjects, loading, error, isRealtime } = useRealtimeProjects();
+  
+  // Get top 3 projects
+  const projects = allProjects.slice(0, 3);
 
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('en-US', {

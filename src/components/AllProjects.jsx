@@ -1,65 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import useRealtimeProjects from "../hooks/useRealtimeProjects";
 
 export default function AllProjects() {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const { projects, loading, error, lastUpdated, metadata, refresh, isRealtime } = useRealtimeProjects();
 
+  // Scroll to top when component mounts
   useEffect(() => {
-    fetchProjects();
-    // Scroll to top when component mounts
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Auto-refresh every 30 seconds for better user experience
-    const interval = setInterval(fetchProjects, 30000);
-    
-    return () => clearInterval(interval);
   }, []);
-
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      // Use different API URL for development vs production
-      const apiUrl = import.meta.env.DEV 
-        ? 'http://localhost:3001/api/projects' 
-        : 'https://hacktilldawn-api.dev-jeromtom.workers.dev/api/projects';
-      
-      let response;
-      try {
-        response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error('API not available');
-        }
-      } catch (error) {
-        console.warn('API not available, using static data:', error.message);
-        // Fallback to static data
-        const staticResponse = await fetch('/projects.json');
-        if (!staticResponse.ok) {
-          throw new Error('Failed to fetch static data');
-        }
-        const data = await staticResponse.json();
-        const sortedProjects = (data.projects || [])
-          .sort((a, b) => (b.totalReactions || 0) - (a.totalReactions || 0));
-        setProjects(sortedProjects);
-        return;
-      }
-      
-      const data = await response.json();
-      
-      // Sort projects by total reactions in descending order
-      const sortedProjects = (data.projects || [])
-        .sort((a, b) => (b.totalReactions || 0) - (a.totalReactions || 0));
-      
-      setProjects(sortedProjects);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching projects:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -318,7 +268,7 @@ export default function AllProjects() {
           <h3 className="text-xl font-semibold text-white mb-2">Failed to load projects</h3>
           <p className="text-slate-400 mb-4">{error}</p>
           <button
-            onClick={fetchProjects}
+            onClick={refresh}
             className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
             Try Again
@@ -343,9 +293,41 @@ export default function AllProjects() {
           <p className="text-slate-400 text-lg max-w-2xl mx-auto">
             All submitted projects ranked by community reactions and engagement. Show your support with reactions and feedback!
           </p>
-          {projects.length > 0 && (
-            <div className="mt-4 text-slate-500 text-sm">
-              {projects.length} project{projects.length !== 1 ? 's' : ''} submitted • Sorted by popularity
+          
+          {/* Real-time Status and Controls */}
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+            {projects.length > 0 && (
+              <div className="text-slate-500 text-sm">
+                {projects.length} project{projects.length !== 1 ? 's' : ''} submitted • Sorted by popularity
+              </div>
+            )}
+            
+            <div className="flex items-center gap-3">
+              {/* Real-time indicator */}
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isRealtime ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+                <span className="text-xs text-slate-400">
+                  {isRealtime ? 'Real-time' : 'Polling'} updates
+                </span>
+              </div>
+              
+              {/* Refresh button */}
+              <button
+                onClick={refresh}
+                className="flex items-center gap-1 px-3 py-1 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 hover:border-cyan-500/50 rounded-lg text-slate-400 hover:text-cyan-400 text-xs transition-all duration-300"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+          
+          {/* Last updated info */}
+          {lastUpdated && (
+            <div className="mt-3 text-slate-500 text-xs">
+              Last updated: {formatDate(lastUpdated)} • Source: {metadata.dataSource || 'API'}
             </div>
           )}
         </div>

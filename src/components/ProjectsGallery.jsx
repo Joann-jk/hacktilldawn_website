@@ -1,37 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
+import useRealtimeProjects from "../hooks/useRealtimeProjects";
 
 export default function ProjectsGallery() {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      // Use different API URL for development vs production
-      const apiUrl = import.meta.env.DEV 
-        ? 'http://localhost:3001/api/projects' 
-        : 'https://hacktilldawn-api.dev-jeromtom.workers.dev/api/projects';
-      
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects');
-      }
-      const data = await response.json();
-      setProjects(data.projects || []);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching projects:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { projects, loading, error, refresh, isRealtime } = useRealtimeProjects();
 
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
