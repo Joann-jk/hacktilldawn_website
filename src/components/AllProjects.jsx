@@ -24,7 +24,7 @@ export default function AllProjects() {
       // Use different API URL for development vs production
       const apiUrl = import.meta.env.DEV 
         ? 'http://localhost:3001/api/projects' 
-        : '/api/projects';
+        : 'https://api.hacktilldawn.workers.dev/api/projects';
       
       let response;
       try {
