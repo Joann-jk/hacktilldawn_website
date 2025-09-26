@@ -1,4 +1,4 @@
-import { addProject, addReaction, addReply } from './projects-data.js';
+import { addProjectWithFallback, addReactionWithFallback, addReplyWithFallback } from './webhook-fallback.js';
 
 // Security and rate limiting
 const webhookSecret = process.env.WHAPI_WEBHOOK_SECRET || 'default-secret';
@@ -194,7 +194,7 @@ export default function handler(req, res) {
                 project.messageId = body.message_id;
                 
                 // Store the project with persistent storage (REAL-TIME UPDATE)
-                addProject(project);
+                await addProjectWithFallback(project);
                 console.log('✅ REAL-TIME: New project added from', TARGET_GROUP, ':', project.name);
                 console.log('📊 Project details:', {
                     name: project.name,
@@ -220,7 +220,7 @@ export default function handler(req, res) {
             };
             
             // Store reaction (REAL-TIME UPDATE)
-            addReaction(reactionData);
+            await addReactionWithFallback(reactionData);
             console.log('✅ REAL-TIME: Reaction received:', reactionData.emoji, 'from', reactionData.sender);
         }
         // Handle replies to project messages
@@ -239,7 +239,7 @@ export default function handler(req, res) {
             };
             
             // Store reply (REAL-TIME UPDATE)
-            addReply(replyData);
+            await addReplyWithFallback(replyData);
             console.log('✅ REAL-TIME: Reply received from', replyData.sender, ':', replyData.text.substring(0, 50) + '...');
         }
         else if (body.type === 'message' && body.chat_id.includes('@g.us')) {

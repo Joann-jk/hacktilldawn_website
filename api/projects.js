@@ -1,4 +1,4 @@
-import { getAllProjects, getProjectsCount, getLastUpdated } from './projects-data.js';
+import { getAllProjectsWithFallback, getProjectsCountWithFallback, getLastUpdatedWithFallback } from './projects-fallback.js';
 
 export default function handler(req, res) {
     // Set CORS headers
@@ -18,43 +18,22 @@ export default function handler(req, res) {
     }
     
     try {
-        // Get real data from storage
-        const projects = getAllProjects();
-        
-        // Calculate reaction counts and totals for each project
-        const projectsWithCounts = projects.map(project => {
-            const reactionCounts = {};
-            let totalReactions = 0;
-            
-            // Count reactions by emoji
-            if (project.reactions && project.reactions.length > 0) {
-                project.reactions.forEach(reaction => {
-                    if (reaction.emoji) {
-                        reactionCounts[reaction.emoji] = (reactionCounts[reaction.emoji] || 0) + 1;
-                        totalReactions++;
-                    }
-                });
-            }
-            
-            return {
-                ...project,
-                reactionCounts,
-                totalReactions,
-                totalReplies: project.replies ? project.replies.length : 0
-            };
-        });
+        // Get real data from database (with file fallback)
+        const projects = await getAllProjectsWithFallback();
+        const totalCount = await getProjectsCountWithFallback();
+        const lastUpdated = await getLastUpdatedWithFallback();
         
         res.json({
-            projects: projectsWithCounts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
-            totalCount: getProjectsCount(),
-            lastUpdated: getLastUpdated(),
+            projects: projects.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
+            totalCount,
+            lastUpdated,
             metadata: {
-                dataSource: 'real',
+                dataSource: 'database',
                 lastFetched: new Date().toISOString(),
-                updateFrequency: 'real-time via webhook, 60s via message fetcher'
+                updateFrequency: 'real-time via webhook'
             },
             isSampleData: false,
-            dataSource: 'real'
+            dataSource: 'database'
         });
     } catch (error) {
         console.error('Error retrieving projects:', error);
