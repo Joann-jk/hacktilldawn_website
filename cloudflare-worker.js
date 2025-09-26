@@ -280,7 +280,14 @@ async function handleWebhook(request, corsHeaders) {
           await addProjectToSupabase(project, supabaseUrl, supabaseKey)
           console.log('✅ REAL-TIME: New project added:', project.name)
         } else {
-          console.log('📝 Message from', TARGET_GROUP, 'did not match project format')
+          console.log('❌ PROJECT REJECTED: Message from', TARGET_GROUP, 'did not match project format')
+          console.log('📝 Raw message:', message.substring(0, 200) + '...')
+          console.log('🔍 Parsed fields:', {
+            name: message.split('\n')[0]?.includes('Name') ? 'Found' : 'Missing',
+            description: message.split('\n').some(line => line.toLowerCase().includes('description')) ? 'Found' : 'Missing',
+            url: message.split('\n').some(line => line.toLowerCase().includes('url')) ? 'Found' : 'Missing',
+            team: message.split('\n').some(line => line.toLowerCase().includes('team')) ? 'Found' : 'Missing'
+          })
         }
       }
     } 
@@ -341,44 +348,45 @@ function parseProjectMessage(message) {
   let team_members = ''
   let currentField = ''
   
+  // More flexible field detection
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
+    const line = lines[i].toLowerCase()
     
-    // Check for field headers (case insensitive)
-    if (line.toLowerCase().startsWith('project name:') || line.toLowerCase().startsWith('name:')) {
+    // Check for field headers (case insensitive, more flexible)
+    if (line.includes('project name:') || line.includes('name:') || line.includes('project:')) {
       currentField = 'name'
-      name = line.substring(line.indexOf(':') + 1).trim()
-    } else if (line.toLowerCase().startsWith('description:')) {
+      name = lines[i].substring(lines[i].indexOf(':') + 1).trim()
+    } else if (line.includes('description:') || line.includes('desc:')) {
       currentField = 'description'
-      description = line.substring(12).trim()
-    } else if (line.toLowerCase().startsWith('url:')) {
+      description = lines[i].substring(lines[i].indexOf(':') + 1).trim()
+    } else if (line.includes('url:') || line.includes('link:') || line.includes('github:') || line.includes('demo:')) {
       currentField = 'url'
-      url = line.substring(4).trim()
-    } else if (line.toLowerCase().startsWith('team name:')) {
+      url = lines[i].substring(lines[i].indexOf(':') + 1).trim()
+    } else if (line.includes('team name:') || line.includes('team:') || line.includes('group:')) {
       currentField = 'team_name'
-      team_name = line.substring(10).trim()
-    } else if (line.toLowerCase().startsWith('team members:')) {
+      team_name = lines[i].substring(lines[i].indexOf(':') + 1).trim()
+    } else if (line.includes('team members:') || line.includes('members:') || line.includes('team members') || line.includes('developers:')) {
       currentField = 'team_members'
-      team_members = line.substring(13).trim()
+      team_members = lines[i].substring(lines[i].indexOf(':') + 1).trim()
     } else {
       // Continue reading content for the current field
       if (currentField === 'name' && !name) {
-        name = line
+        name = lines[i]
       } else if (currentField === 'description') {
         if (description) {
-          description += ' ' + line
+          description += ' ' + lines[i]
         } else {
-          description = line
+          description = lines[i]
         }
       } else if (currentField === 'url' && !url) {
-        url = line
+        url = lines[i]
       } else if (currentField === 'team_name' && !team_name) {
-        team_name = line
+        team_name = lines[i]
       } else if (currentField === 'team_members') {
         if (team_members) {
-          team_members += ', ' + line
+          team_members += ', ' + lines[i]
         } else {
-          team_members = line
+          team_members = lines[i]
         }
       }
     }
@@ -391,10 +399,50 @@ function parseProjectMessage(message) {
   team_name = team_name.trim()
   team_members = team_members.trim()
   
-  // Validate required fields and URL format
+  // More flexible validation - try to extract missing fields from context
+  if (!name && lines.length > 0) {
+    // Try to use first line as name if no explicit name field
+    name = lines[0]
+  }
+  
+  if (!description && lines.length > 1) {
+    // Try to use second line as description if no explicit description field
+    description = lines[1]
+  }
+  
+  // Look for URLs in any line
+  if (!url) {
+    for (const line of lines) {
+      if (isValidUrl(line)) {
+        url = line
+        break
+      }
+    }
+  }
+  
+  // Look for team info in any line
+  if (!team_name && !team_members) {
+    for (const line of lines) {
+      if (line.toLowerCase().includes('team') || line.toLowerCase().includes('group')) {
+        if (!team_name) team_name = line
+        else if (!team_members) team_members = line
+      }
+    }
+  }
+  
+  // Final validation
   if (name && description && url && team_name && team_members && isValidUrl(url)) {
     return { name, description, url, team_name, team_members }
   }
+  
+  // Log what was found for debugging
+  console.log('🔍 Parsing failed. Found:', {
+    name: name || 'MISSING',
+    description: description || 'MISSING', 
+    url: url || 'MISSING',
+    team_name: team_name || 'MISSING',
+    team_members: team_members || 'MISSING'
+  })
   
   return null
 }
