@@ -19,7 +19,7 @@ export default function TopProjects() {
       // Use different API URL for development vs production
       const apiUrl = import.meta.env.DEV 
         ? 'http://localhost:3001/api/projects' 
-        : '/projects.json';
+        : 'https://hacktilldawn-api.dev-jeromtom.workers.dev/api/projects';
       
       const response = await fetch(apiUrl);
       if (!response.ok) {
