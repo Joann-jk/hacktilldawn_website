@@ -1,15 +1,4 @@
 {
-  "functions": {
-    "api/projects.js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/debug.js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/webhook.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",
