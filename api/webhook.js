@@ -1,4 +1,5 @@
-import { addProjectWithFallback, addReactionWithFallback, addReplyWithFallback } from './webhook-fallback.js';
+// Vercel API function - using CommonJS format
+const { addProjectWithFallback, addReactionWithFallback, addReplyWithFallback } = require('./webhook-fallback.js');
 
 // Security and rate limiting
 const webhookSecret = process.env.WHAPI_WEBHOOK_SECRET || 'default-secret';
@@ -95,7 +96,7 @@ function isValidUrl(string) {
 }
 
 // Webhook endpoint to receive WhatsApp messages
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
