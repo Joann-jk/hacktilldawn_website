@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 
-import dotenv from 'dotenv';
 import { testSupabaseConnection } from './database/supabase-connection.js';
 import { initializeSupabaseDatabase } from './database/supabase-projects.js';
 import { migrateDataToSupabase } from './migrate-to-supabase.js';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables (only in development)
+async function loadEnv() {
+    if (process.env.NODE_ENV !== 'production') {
+        try {
+            const dotenv = await import('dotenv');
+            dotenv.config();
+        } catch (error) {
+            // dotenv not available, continue without it
+        }
+    }
+}
 
 console.log('🚀 HackTillDawn Supabase Setup');
 console.log('================================\n');
@@ -32,6 +40,9 @@ if (missingVars.length > 0) {
 
 async function setup() {
     try {
+        // Load environment variables
+        await loadEnv();
+        
         // Test Supabase connection
         console.log('🔌 Testing Supabase connection...');
         const connected = await testSupabaseConnection();
