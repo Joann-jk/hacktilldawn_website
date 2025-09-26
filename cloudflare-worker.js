@@ -182,22 +182,34 @@ async function handleWebhook(request, corsHeaders) {
 }
 
 async function handleDebug(request, corsHeaders) {
-  const envCheck = {
-    NODE_ENV: 'cloudflare-worker',
-    SUPABASE_URL: SUPABASE_URL ? 'Set' : 'Not set',
-    SUPABASE_ANON_KEY: SUPABASE_ANON_KEY ? 'Set' : 'Not set',
-    WHAPI_TOKEN: WHAPI_TOKEN ? 'Set' : 'Not set',
-    WHAPI_WEBHOOK_SECRET: WHAPI_WEBHOOK_SECRET ? 'Set' : 'Not set',
+  try {
+    const envCheck = {
+      NODE_ENV: 'cloudflare-worker',
+      SUPABASE_URL: SUPABASE_URL ? 'Set' : 'Not set',
+      SUPABASE_ANON_KEY: SUPABASE_ANON_KEY ? 'Set' : 'Not set',
+      WHAPI_TOKEN: WHAPI_TOKEN ? 'Set' : 'Not set',
+      WHAPI_WEBHOOK_SECRET: WHAPI_WEBHOOK_SECRET ? 'Set' : 'Not set',
+    }
+    
+    return new Response(JSON.stringify({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      environment: envCheck,
+      platform: 'Cloudflare Workers',
+      message: 'Debug endpoint working'
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  } catch (error) {
+    return new Response(JSON.stringify({
+      status: 'Error',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      platform: 'Cloudflare Workers'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
   }
-  
-  return new Response(JSON.stringify({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: envCheck,
-    platform: 'Cloudflare Workers',
-    message: 'Debug endpoint working'
-  }), {
-    status: 200,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  })
 }
