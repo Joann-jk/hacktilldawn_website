@@ -359,17 +359,22 @@ class MessageFetcher {
         }
 
         this.isRunning = true;
-        console.log('🔄 Starting message fetcher (every minute)...');
+        console.log('🔄 Starting message fetcher (every 60 seconds as backup sync)...');
 
         // Run immediately
         await this.fetchNewMessages();
 
-        // Then run every minute
+        // Then run every 60 seconds as backup sync method
         this.intervalId = setInterval(async () => {
             if (this.isRunning) {
-                await this.fetchNewMessages();
+                try {
+                    console.log('🔄 Running scheduled message fetch (backup sync)...');
+                    await this.fetchNewMessages();
+                } catch (error) {
+                    console.error('❌ Error in scheduled message fetch:', error.message);
+                }
             }
-        }, 60000); // 60 seconds
+        }, 60000); // 60 seconds - backup sync frequency
     }
 
     // Stop the fetcher

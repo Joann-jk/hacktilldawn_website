@@ -11,6 +11,11 @@ export default function AllProjects() {
     fetchProjects();
     // Scroll to top when component mounts
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Auto-refresh every 30 seconds for better user experience
+    const interval = setInterval(fetchProjects, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchProjects = async () => {
@@ -19,7 +24,7 @@ export default function AllProjects() {
       // Use different API URL for development vs production
       const apiUrl = import.meta.env.DEV 
         ? 'http://localhost:3001/api/projects' 
-        : '/projects.json';
+        : '/api/projects';
       
       const response = await fetch(apiUrl);
       if (!response.ok) {
@@ -334,7 +339,7 @@ export default function AllProjects() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project, index) => (
               <ProjectCard 
-                key={project.messageId || index} 
+                key={project.messageId || `${project.name}-${project.timestamp}-${index}`} 
                 project={project} 
                 index={index}
                 rank={index + 1}

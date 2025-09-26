@@ -1,3 +1,5 @@
+import { getAllProjects, getProjectsCount, getLastUpdated } from './projects-data.js';
+
 export default function handler(req, res) {
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,61 +18,41 @@ export default function handler(req, res) {
     }
     
     try {
-        // Simple hardcoded response
-        const projects = [
-            {
-                "name": "Test Project",
-                "description": "This is a test project to verify persistence",
-                "url": "https://example.com",
-                "teamName": "Test Team",
-                "teamMembers": "Test User, Test Member",
-                "sender": "Test User",
-                "groupName": "Test Group",
-                "timestamp": "2025-09-25T17:51:20.348Z",
-                "reactions": [],
-                "replies": [],
-                "reactionCounts": {},
-                "totalReactions": 0,
-                "totalReplies": 0
-            },
-            {
-                "name": "Hacked",
-                "description": "Hackathon project description",
-                "url": "https://hacked.com",
-                "teamName": "Hackerz",
-                "teamMembers": "Jerom Tom, John Doe",
-                "sender": "Jerom Tom",
-                "groupName": "HackTillDawn Final Participants",
-                "timestamp": "2025-01-27T10:00:00.000Z",
-                "reactions": [],
-                "replies": [],
-                "reactionCounts": {},
-                "totalReactions": 0,
-                "totalReplies": 0
-            },
-            {
-                "name": "Project Gallery",
-                "description": "View and vote on all projects built at HackTillDawn.",
-                "url": "https://hacktilldawn-website.vercel.app/projects",
-                "teamName": "HackTillDawn",
-                "teamMembers": "Joann, Jerom",
-                "sender": "Jerom Palimattom Tom",
-                "groupName": "HackTillDawn Final Participants",
-                "messageId": "pe.VGVcxmWLREHCNvj7a4Q-wpgBq53lJfJECQ",
-                "timestamp": "2025-09-25T21:21:04.000Z",
-                "reactions": [],
-                "replies": [],
-                "reactionCounts": {},
-                "totalReactions": 0,
-                "totalReplies": 0
+        // Get real data from storage
+        const projects = getAllProjects();
+        
+        // Calculate reaction counts and totals for each project
+        const projectsWithCounts = projects.map(project => {
+            const reactionCounts = {};
+            let totalReactions = 0;
+            
+            // Count reactions by emoji
+            if (project.reactions && project.reactions.length > 0) {
+                project.reactions.forEach(reaction => {
+                    if (reaction.emoji) {
+                        reactionCounts[reaction.emoji] = (reactionCounts[reaction.emoji] || 0) + 1;
+                        totalReactions++;
+                    }
+                });
             }
-        ];
+            
+            return {
+                ...project,
+                reactionCounts,
+                totalReactions,
+                totalReplies: project.replies ? project.replies.length : 0
+            };
+        });
         
         res.json({
-            projects: projects.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
-            totalCount: projects.length,
-            lastUpdated: projects.length > 0 ? projects[0].timestamp : null,
-            metadata: {},
+            projects: projectsWithCounts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
+            totalCount: getProjectsCount(),
+            lastUpdated: getLastUpdated(),
+            metadata: {
+                dataSource: 'real',
+                lastFetched: new Date().toISOString(),
+                updateFrequency: 'real-time via webhook, 60s via message fetcher'
+            },
             isSampleData: false,
             dataSource: 'real'
         });

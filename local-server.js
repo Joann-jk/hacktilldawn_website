@@ -4,7 +4,9 @@ import { createServer } from 'http';
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import messageFetcher from './api/message-fetcher.js';
+import { getAllProjects, addProject, addReaction, addReply } from './api/projects-data.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,122 +15,30 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// In-memory storage (same as production)
-let projects = [
-    {
-        name: "EcoTracker",
-        description: "A sustainable hardware solution for monitoring environmental parameters in rural communities. Uses low-cost sensors to track air quality, water quality, and energy usage with real-time alerts.",
-        url: "https://github.com/example/ecotracker",
-        sender: "Alice Johnson",
-        groupName: "HackTillDawn Final Participants",
-        messageId: "msg_001",
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        reactions: [],
-        replies: []
-    },
-    {
-        name: "SafeDrive AI",
-        description: "An AI-powered hardware system that detects drowsy driving and provides real-time alerts to improve road safety. Uses computer vision and sensor fusion for accurate detection.",
-        url: "https://github.com/example/safedrive",
-        sender: "Bob Smith",
-        groupName: "HackTillDawn Final Participants", 
-        messageId: "msg_002",
-        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-        reactions: [],
-        replies: []
-    },
-    {
-        name: "AgriSense Pro",
-        description: "A comprehensive software platform for farmers that provides crop planning, weather forecasts, market prices, and financial literacy tools. Built with React and Node.js for maximum accessibility.",
-        url: "https://github.com/example/agrisense",
-        sender: "Carlos Rodriguez",
-        groupName: "HackTillDawn Final Participants",
-        messageId: "msg_003",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        reactions: [],
-        replies: []
-    }
-];
+// Load data from file system
+let projects = getAllProjects();
+console.log(`📊 Loaded ${projects.length} projects from file system`);
 
-let reactions = [
-    {
-        messageId: "msg_001",
-        emoji: "🚀",
-        sender: "Charlie Brown",
-        timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "msg_001", 
-        emoji: "💡",
-        sender: "Diana Prince",
-        timestamp: new Date(Date.now() - 80 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "msg_001",
-        emoji: "🚀",
-        sender: "Eve Wilson",
-        timestamp: new Date(Date.now() - 70 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "msg_002",
-        emoji: "🔥",
-        sender: "Frank Miller",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "msg_002",
-        emoji: "💯",
-        sender: "Grace Lee",
-        timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "msg_003",
-        emoji: "🌱",
-        sender: "Henry Davis",
-        timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    }
-];
+// Load reactions and replies from file system
+let reactions = [];
+let replies = [];
 
-let replies = [
-    {
-        messageId: "reply_001",
-        quotedMessageId: "msg_001",
-        text: "This looks amazing! How do you handle power consumption for the sensors?",
-        sender: "Frank Miller",
-        timestamp: new Date(Date.now() - 70 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "reply_002", 
-        quotedMessageId: "msg_001",
-        text: "Love the environmental focus! This could really help rural communities.",
-        sender: "Grace Lee",
-        timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "reply_003",
-        quotedMessageId: "msg_002",
-        text: "Great work! Have you tested this in real driving conditions?",
-        sender: "Henry Davis",
-        timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
-    },
-    {
-        messageId: "reply_004",
-        quotedMessageId: "msg_003",
-        text: "This is exactly what farmers need! The market price integration is brilliant.",
-        sender: "Ivy Chen",
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        chatId: "test@g.us"
+// Load from files if they exist
+try {
+    const reactionsFile = path.join(__dirname, 'data', 'reactions.json');
+    if (fs.existsSync(reactionsFile)) {
+        reactions = JSON.parse(fs.readFileSync(reactionsFile, 'utf8'));
     }
-];
+    
+    const repliesFile = path.join(__dirname, 'data', 'replies.json');
+    if (fs.existsSync(repliesFile)) {
+        replies = JSON.parse(fs.readFileSync(repliesFile, 'utf8'));
+    }
+    
+    console.log(`📊 Loaded ${reactions.length} reactions and ${replies.length} replies from file system`);
+} catch (error) {
+    console.log('⚠️ Using empty reactions and replies arrays:', error.message);
+}
 
 // Parse the structured message format
 function parseProjectMessage(message) {
@@ -294,7 +204,14 @@ app.get('/api/projects', (req, res) => {
         res.json({
             projects: enhancedProjects,
             totalCount: projects.length,
-            lastUpdated: projects.length > 0 ? projects[0].timestamp : null
+            lastUpdated: projects.length > 0 ? projects[0].timestamp : null,
+            metadata: {
+                dataSource: 'real',
+                lastFetched: new Date().toISOString(),
+                updateFrequency: 'real-time via webhook, 60s via message fetcher'
+            },
+            isSampleData: false,
+            dataSource: 'real'
         });
     } catch (error) {
         console.error('Error retrieving projects:', error);

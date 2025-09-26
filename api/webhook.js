@@ -193,9 +193,15 @@ export default function handler(req, res) {
                 project.groupName = body.chat_name;
                 project.messageId = body.message_id;
                 
-                // Store the project with persistent storage
+                // Store the project with persistent storage (REAL-TIME UPDATE)
                 addProject(project);
-                console.log('New project added from', TARGET_GROUP, ':', project);
+                console.log('✅ REAL-TIME: New project added from', TARGET_GROUP, ':', project.name);
+                console.log('📊 Project details:', {
+                    name: project.name,
+                    team: project.teamName,
+                    url: project.url,
+                    timestamp: project.timestamp
+                });
             } else {
                 console.log('Message from', TARGET_GROUP, 'did not match project format:', message.substring(0, 100));
             }
@@ -213,9 +219,9 @@ export default function handler(req, res) {
                 chatId: body.chat_id
             };
             
-            // Store reaction
+            // Store reaction (REAL-TIME UPDATE)
             addReaction(reactionData);
-            console.log('Reaction received:', reactionData);
+            console.log('✅ REAL-TIME: Reaction received:', reactionData.emoji, 'from', reactionData.sender);
         }
         // Handle replies to project messages
         else if (body.type === 'message' && 
@@ -232,9 +238,9 @@ export default function handler(req, res) {
                 chatId: body.chat_id
             };
             
-            // Store reply
+            // Store reply (REAL-TIME UPDATE)
             addReply(replyData);
-            console.log('Reply received:', replyData);
+            console.log('✅ REAL-TIME: Reply received from', replyData.sender, ':', replyData.text.substring(0, 50) + '...');
         }
         else if (body.type === 'message' && body.chat_id.includes('@g.us')) {
             // Log messages from other groups (for debugging)

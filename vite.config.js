@@ -13,9 +13,14 @@ export default defineConfig({
     }
   },
   server: {
-    // Exclude API directory from dev server processing
-    fs: {
-      deny: ['**/api/**']
+    port: 5173,
+    proxy: {
+      // Proxy API requests to the local server
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
     }
   }
 })

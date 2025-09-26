@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "node start-dev.js",
     "dev:local": "npm run build && node local-server.js",
     "dev:with-fetcher": "npm run build && node local-server.js",
     "build": "vite build",
@@ -13,10 +14,11 @@
     "test:webhook": "node ./test-integrated-webhook.js",
     "test:local": "node test-local-webhook.js",
     "test:real-data": "node test-real-data.js",
+    "test:updates": "node test-update-frequencies.js",
     "setup:real-data": "node setup-real-data.js",
     "start": "node local-server.js",
     "start:fetcher": "node -e \"import('./api/message-fetcher.js').then(m => m.default.start())\"",
-    "health": "curl http://localhost:3000/api/health",
+    "health": "curl http://localhost:3001/api/health",
     "fetcher:status": "curl http://localhost:3001/api/fetcher-status"
   },
   "dependencies": {

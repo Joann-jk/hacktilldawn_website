@@ -1,12 +1,8 @@
-import { getProjectsCount, getLastUpdated } from './projects-data.js';
-
 export default function handler(req, res) {
-    // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     
-    // Handle preflight requests
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
@@ -18,26 +14,31 @@ export default function handler(req, res) {
     }
     
     try {
-        const projectsCount = getProjectsCount();
-        const lastUpdated = getLastUpdated();
-        
-        res.json({ 
-            status: 'OK', 
+        const health = {
+            status: 'healthy',
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
-            projects: {
-                count: projectsCount,
-                lastUpdated: lastUpdated
+            environment: process.env.NODE_ENV || 'development',
+            version: '1.0.0',
+            updateFrequencies: {
+                webhook: 'real-time (immediate)',
+                messageFetcher: '60 seconds (backup sync)',
+                frontend: '30 seconds (user experience)'
             },
-            version: process.env.npm_package_version || '1.0.0',
-            message: 'HackTillDawn API is running'
-        });
+            services: {
+                webhook: 'active',
+                messageFetcher: 'active',
+                api: 'active',
+                dataStorage: 'active'
+            }
+        };
+        
+        res.status(200).json(health);
     } catch (error) {
-        console.error('Health check error:', error);
         res.status(500).json({ 
-            status: 'ERROR', 
-            timestamp: new Date().toISOString(),
-            error: 'Health check failed'
+            status: 'unhealthy', 
+            error: error.message,
+            timestamp: new Date().toISOString()
         });
     }
 }

@@ -112,12 +112,57 @@ function addProject(project) {
         project.timestamp = new Date().toISOString();
     }
     
+    // Check for duplicates before adding
+    const existingProject = projects.find(existing => 
+        existing.messageId === project.messageId || 
+        (existing.name === project.name && existing.url === project.url)
+    );
+    
+    if (existingProject) {
+        console.log(`🔄 Duplicate project found, merging: ${project.name} (${project.messageId})`);
+        
+        // Merge the duplicate project data
+        // Keep the most recent timestamp
+        if (new Date(project.timestamp) > new Date(existingProject.timestamp)) {
+            existingProject.timestamp = project.timestamp;
+            existingProject.sender = project.sender; // Update sender to latest
+        }
+        
+        // Merge team information if different
+        if (project.teamName && project.teamName !== existingProject.teamName) {
+            existingProject.teamName = `${existingProject.teamName}, ${project.teamName}`;
+        }
+        if (project.teamMembers && project.teamMembers !== existingProject.teamMembers) {
+            existingProject.teamMembers = `${existingProject.teamMembers}, ${project.teamMembers}`;
+        }
+        
+        // Update description if more detailed
+        if (project.description && project.description.length > existingProject.description.length) {
+            existingProject.description = project.description;
+        }
+        
+        // Track additional message IDs for this project
+        if (!existingProject.relatedMessageIds) {
+            existingProject.relatedMessageIds = [existingProject.messageId];
+        }
+        if (project.messageId && !existingProject.relatedMessageIds.includes(project.messageId)) {
+            existingProject.relatedMessageIds.push(project.messageId);
+        }
+        
+        // Save the updated project
+        saveProjects(projects);
+        console.log(`✅ Project merged successfully: ${existingProject.name}`);
+        return existingProject;
+    }
+    
     // Initialize reactions and replies arrays
     project.reactions = [];
     project.replies = [];
+    project.relatedMessageIds = [project.messageId]; // Track message IDs for this project
     
     projects.push(project);
     saveProjects(projects);
+    console.log(`✅ New project added: ${project.name} (${project.messageId})`);
     return project;
 }
 
@@ -125,12 +170,23 @@ function addReaction(reactionData) {
     reactions.push(reactionData);
     saveReactions();
     
-    // Find the project by messageId and add reaction
-    const project = projects.find(p => p.messageId === reactionData.messageId);
+    // Find the project by messageId (exact match first)
+    let project = projects.find(p => p.messageId === reactionData.messageId);
+    
+    // If no exact match, try to find by related message IDs (for merged projects)
+    if (!project) {
+        project = projects.find(p => 
+            p.relatedMessageIds && p.relatedMessageIds.includes(reactionData.messageId)
+        );
+    }
+    
     if (project) {
         if (!project.reactions) project.reactions = [];
         project.reactions.push(reactionData);
         saveProjects(projects);
+        console.log(`👍 Reaction added to project: ${project.name} (${reactionData.emoji})`);
+    } else {
+        console.log(`⚠️ No project found for reaction messageId: ${reactionData.messageId}`);
     }
     
     return reactionData;
@@ -140,12 +196,23 @@ function addReply(replyData) {
     replies.push(replyData);
     saveReplies();
     
-    // Find the project by quotedMessageId and add reply
-    const project = projects.find(p => p.messageId === replyData.quotedMessageId);
+    // Find the project by quotedMessageId (exact match first)
+    let project = projects.find(p => p.messageId === replyData.quotedMessageId);
+    
+    // If no exact match, try to find by related message IDs (for merged projects)
+    if (!project) {
+        project = projects.find(p => 
+            p.relatedMessageIds && p.relatedMessageIds.includes(replyData.quotedMessageId)
+        );
+    }
+    
     if (project) {
         if (!project.replies) project.replies = [];
         project.replies.push(replyData);
         saveProjects(projects);
+        console.log(`💬 Reply added to project: ${project.name}`);
+    } else {
+        console.log(`⚠️ No project found for reply quotedMessageId: ${replyData.quotedMessageId}`);
     }
     
     return replyData;

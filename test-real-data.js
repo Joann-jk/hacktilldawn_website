@@ -7,7 +7,7 @@
 
 import fetch from 'node-fetch';
 
-const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
+const BASE_URL = process.env.TEST_URL || 'http://localhost:3001';
 const WEBHOOK_URL = `${BASE_URL}/api/webhook`;
 const PROJECTS_URL = `${BASE_URL}/api/projects`;
 
@@ -33,8 +33,8 @@ async function testProjectsAPI() {
         const data = await response.json();
         
         console.log(`   ✅ Projects API: ${data.totalCount} projects`);
-        console.log(`   📊 Data source: ${data.dataSource}`);
-        console.log(`   🔄 Is sample data: ${data.isSampleData}`);
+        console.log(`   📊 Data source: ${data.dataSource || data.metadata?.dataSource || 'unknown'}`);
+        console.log(`   🔄 Is sample data: ${data.isSampleData || false}`);
         
         if (data.projects.length > 0) {
             console.log(`   📝 Latest project: ${data.projects[0].name}`);
@@ -52,7 +52,7 @@ async function testSampleData() {
         const data = await response.json();
         
         console.log(`   ✅ Sample data: ${data.totalCount} projects`);
-        console.log(`   📊 Data source: ${data.dataSource}`);
+        console.log(`   📊 Data source: ${data.dataSource || data.metadata?.dataSource || 'unknown'}`);
     } catch (error) {
         console.log(`   ❌ Sample data test failed: ${error.message}`);
     }
@@ -103,7 +103,8 @@ async function checkRealData() {
         const response = await fetch(PROJECTS_URL);
         const data = await response.json();
         
-        if (data.dataSource === 'real' && data.totalCount > 0) {
+        const dataSource = data.dataSource || data.metadata?.dataSource;
+        if (dataSource === 'real' && data.totalCount > 0) {
             console.log(`   ✅ Real data detected: ${data.totalCount} projects`);
             console.log(`   📝 Latest real project: ${data.projects[0].name}`);
         } else {
